@@ -71,7 +71,7 @@ def writer_node(
         Updated state after generating response and incrementing revision count if feedback was provided.
     """
     revision_count = state.get("revision_count", 0)
-    latest_decision = state.get("latest_decision_by_reviewer", Decision.APPROVE)
+    latest_decision = state.get("latest_reviewer_decision", Decision.APPROVE)
 
     # Determine if this is a revision or initial write
     feedback = None
@@ -119,7 +119,7 @@ def reviewer_node(
 
     # Get response and comment for review
     latest_response = state.get("latest_message_response_by_writer", "")
-    original_message = state.get("original_customer_message", "")
+    original_message = state.get("origional_customer_message", "")
 
     # Create review messages
     reviewer_prompt = open(PROMPTS_DIR / "reviewer_instructions.md").read()
