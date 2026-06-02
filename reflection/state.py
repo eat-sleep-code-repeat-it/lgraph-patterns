@@ -1,4 +1,3 @@
-import os
 from dataclasses import dataclass
 from enum import Enum
 from typing import Literal
@@ -29,8 +28,8 @@ class MessageResponseState(MessagesState):
     """Extended state for tracking reflection workflow.
     Attributes:
         revision_count: Number of revisions made to the content.
-        origional_message: The original message or content before any revisions.
-        latest_feedback_for_writer: Most recent feedback from reviewer.
+        origional_customer_message: The original message or content before any revisions.
+        latest_feedback_for_reviewer: Most recent feedback from reviewer.
         latest_message_response_by_writer: Most recent response writtern.
         latest_reviewer_decision: Current decision from reviewer (APPROVE/REVISE).
         continue_revision: Flag to indicatig whether to continue revisions or not.       

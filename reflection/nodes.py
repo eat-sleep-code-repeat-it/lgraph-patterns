@@ -1,11 +1,7 @@
 from pathlib import Path
 from typing import Optional
-from time import sleep
-from langchain.chat_models import init_chat_model
 from langchain_core.messages import HumanMessage, AIMessage
-from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI
-from langgraph.config import get_stream_writer
 
 from state import MessageResponseState, Decision, NodeName, AIReviewerResponse
 from config import (
@@ -154,7 +150,10 @@ def reviewer_node(
         f"Here is the feedback: \n{feedback_text}\n\n"
     )
     reviewer_response = llm.with_structured_output(
-        AIReviewerResponse
+        AIReviewerResponse,
+        ## you need uncomment the below line to fallback to function_calling
+        ## for llm models that do not support structured output parsing natively (e.g. gpt-3.5-turbo)
+        #method="function_calling"
     ).invoke(decision_prompt)
     decision = reviewer_response.get("decision", Decision.REVISE.value)
 

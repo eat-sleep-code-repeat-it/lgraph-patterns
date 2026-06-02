@@ -2,7 +2,7 @@ import os
 
 # constants
 MAX_REVISIONS = int(os.getenv("MAX_REVISIONS", 3))
-DEFAULT_MODEL = os.getenv("DEFAULT_MODEL", "gpt-3.5-turbo")
+DEFAULT_MODEL = os.getenv("DEFAULT_MODEL", "gpt-4o-mini")
 DEFAULT_TEMPERATURE = float(os.getenv("DEFAULT_TEMPERATURE", 0.9))
 MAX_REVISIONS_MESSAGE = os.getenv(
     "MAX_REVISIONS_MESSAGE", 
