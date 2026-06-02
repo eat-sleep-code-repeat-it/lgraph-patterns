@@ -27,7 +27,11 @@ def _create_writer_message(
     """
 
     writer_prompt = open(PROMPTS_DIR / "writer_instructions.md").read()
-    messages = [{"role": "system", "content": writer_prompt}] + state["messages"]
+    messages = [
+        {
+            "role": "system", 
+            "content": writer_prompt
+        }] + state["messages"]
     original_message = state.get("original_customer_message", "")
     messages.append(HumanMessage(content=f"\n\nOriginal Customer Message:\n{original_message}\n\n"))
 
@@ -40,7 +44,7 @@ def _create_writer_message(
     return messages
 
 def _update_writer_state(
-        state: MessageResponseState, response_content: str
+    state: MessageResponseState, response_content: str
 ) -> MessageResponseState:
     """Update the state after writer node generates response
     Args:
@@ -102,6 +106,7 @@ def reviewer_node(
     Returns:
         Updated state with reviewer feedback and continuation decision.
     """
+
     revision_count = state.get("revision_count", 0)
 
     # Check if max revisions reached
@@ -124,7 +129,10 @@ def reviewer_node(
     # Create review messages
     reviewer_prompt = open(PROMPTS_DIR / "reviewer_instructions.md").read()
     messages = [
-        {"role": "system", "content": reviewer_prompt}
+        {
+            "role": "system", 
+            "content": reviewer_prompt
+        }
     ] + state["messages"]
 
     review_content = (
@@ -145,7 +153,7 @@ def reviewer_node(
 
     # Extract decision using structured output parsing
     decision_prompt = (
-        "Based on the given feedback provided by the agent, idenntify if "
+        "Based on the given feedback provided by the agent, identify if "
         "the agent suggests revision or approves the content as is."
         f"Here is the feedback: \n{feedback_text}\n\n"
     )
