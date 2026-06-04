@@ -1,7 +1,8 @@
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Literal
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_openai import ChatOpenAI
+from langgraph.types import interrupt, Command
 
 from state import MessageResponseState, Decision, NodeName, AIReviewerResponse
 from config import (
@@ -192,4 +193,48 @@ def publisher_node(
         unchanged state (ready for publication)
     """
 
+    print("The response has been approved by human reviewer.")
     return {**state}
+
+
+def human_review_node(state: MessageResponseState) -> Command[Literal[NodeName.PUBLISHER.value, NodeName.REJECTION.value]]:
+    # Pause execution and wait for human reviewer decision]
+    human_review_response = interrupt({
+        "Question": "Do you want to publish the AI response? (response examples {'action':'approve'} "
+        "or {'action':'reject'} or {'action':'edit', 'edit_content':'Thank you very much for your message'}) ",
+        "AI response": state.get("latest_message_response_by_writer", "")
+    })
+
+    action = human_review_response.get("action")
+    state["human_review"] = StopAsyncIteration
+
+    # Route based on the response
+    if action == "approve":
+        return Command(goto=NodeName.PUBLISHER.value,
+            update={
+                **state,
+                "message":[HumanMessage(content="Human reviewer approved the response.", nae=NodeName.HUMAN_REVIEW.value)]
+            })
+    elif action == "reject":
+        return Command(goto=NodeName.REJECTION.value,
+            update={
+                **state,
+                "message":[HumanMessage(content="Human reviewer rejected the response.", nae=NodeName.HUMAN_REVIEW.value)]
+            })
+    else:
+        return Command(goto=NodeName.REJECTION.value, update={**state})
+    
+def rejection_node(state: MessageResponseState):
+    """Final node that publishes or rejects the approved response.
+
+    This node is called when the response has been approved by the reviewer
+    or maximum reviews have been reached. It serves as the terminal node
+    before workflow completion.
+
+    Args:
+        state: Final workflow state.
+    Returns:
+        Unchanged state (human review)
+    """
+
+    print("The response has been rejected by human reviewer.")

@@ -15,6 +15,8 @@ class NodeName(str, Enum):
     WRITER = "writer_node"
     REVIEWER = "reviewer_node"
     PUBLISHER = "publisher_node"
+    HUMAN_REVIEW = "human_review_node"
+    REJECTION = "rejection_node"
 
 @dataclass
 class AIReviewerResponse:

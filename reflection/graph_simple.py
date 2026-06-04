@@ -8,7 +8,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import StateGraph, START, END
 
 from state import MessageResponseState, Decision, NodeName
-from nodes import writer_node, reviewer_node, publisher_node
+from nodes import writer_node, reviewer_node, publisher_node, human_review_node, rejection_node
 
 def should_continue(state: MessageResponseState) -> str:
     """Determine whether to continue the revision process based on the current state.
@@ -19,7 +19,7 @@ def should_continue(state: MessageResponseState) -> str:
     """
     if state.get("continue_revision", False):
         return NodeName.WRITER.value    
-    return NodeName.PUBLISHER.value
+    return NodeName.HUMAN_REVIEW.value # NodeName.PUBLISHER.value
 
 def create_reflection_graph() -> StateGraph:
     """Create a state graph for the reflection workflow.
@@ -30,7 +30,9 @@ def create_reflection_graph() -> StateGraph:
     workflow = StateGraph(MessageResponseState)
     workflow.add_node(NodeName.WRITER.value, writer_node)
     workflow.add_node(NodeName.REVIEWER.value, reviewer_node)
+    workflow.add_node(NodeName.HUMAN_REVIEW.value, human_review_node)
     workflow.add_node(NodeName.PUBLISHER.value, publisher_node)
+    workflow.add_node(NodeName.REJECTION.value, rejection_node)
 
     workflow.add_edge(START, NodeName.WRITER.value)
     workflow.add_edge(NodeName.WRITER.value, NodeName.REVIEWER.value)
@@ -39,10 +41,11 @@ def create_reflection_graph() -> StateGraph:
         should_continue,
         {
             NodeName.WRITER.value: NodeName.WRITER.value,
-            NodeName.PUBLISHER.value: NodeName.PUBLISHER.value,
+            NodeName.HUMAN_REVIEW.value: NodeName.HUMAN_REVIEW.value,
         },
     )
     workflow.add_edge(NodeName.PUBLISHER.value, END)
+    workflow.add_edge(NodeName.REJECTION.value, END)
     return workflow
 
 async def process_customer_message(
