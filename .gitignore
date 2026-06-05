@@ -3,3 +3,4 @@
 __pycache__/
 *.pyc
 reflection_graph.png
+.langgraph_api
