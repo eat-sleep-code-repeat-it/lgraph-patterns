@@ -7,8 +7,11 @@ from langchain_core.messages import HumanMessage
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import StateGraph, START, END
 
-from state import MessageResponseState, Decision, NodeName
+from state import ContextSchema, MessageResponseState, Decision, NodeName
 from nodes import writer_node, reviewer_node, publisher_node
+
+from langgraph.store.memory import InMemoryStore
+from langchain.embeddings import init_embeddings
 
 def should_continue(state: MessageResponseState) -> str:
     """Determine whether to continue the revision process based on the current state.
@@ -48,7 +51,9 @@ def create_reflection_graph() -> StateGraph:
 async def process_customer_message(
     customer_message: str,
     thread_id: str = "message_112233",
-    checkpointer: Optional[InMemorySaver] = None
+    checkpointer: Optional[InMemorySaver] = None,
+    store: Optional[InMemorySaver] = True,
+    context: ContextSchema = None
 ) -> Dict[str, Any]:
     """Process a customer message through the reflection workflow.
     Args:
@@ -60,11 +65,7 @@ async def process_customer_message(
     """
 
     workflow = create_reflection_graph()
-    app = (
-        workflow.compile(checkpointer=checkpointer)
-        if checkpointer 
-        else workflow.compile()
-    )
+    app = workflow.compile(checkpointer=checkpointer, store=store)
 
     # Initialize workflow state
     initial_state = {
@@ -83,7 +84,8 @@ async def process_customer_message(
     }
     final_state = await app.ainvoke(
         initial_state, 
-        config=config
+        config=config,
+        context=context
     )
     return final_state
 
@@ -98,10 +100,36 @@ async def main() -> None:
 
     # Process the comment
     checkpointer = InMemorySaver()
+
+    # Create store with semantic search enabled
+    embeddings = init_embeddings("openai:text-embedding-3-small")
+    store = InMemoryStore(
+        index={
+            "embed": embeddings,
+            "dims": 1536,
+        }
+    )
+    store.put(
+        ("user_112233", "memories"),
+         "1",
+        {"text": "My name is John"}
+        )
+    store.put(
+        ("user_112233", "memories"),
+         "2",
+        {"text": "I am a software developer"}
+        )  
+    store.put(
+        ("user_112233", "memories"),
+         "3",
+        {"text": "I love technology and programming"}
+        )   
     result = await process_customer_message(
         customer_message=sample_comment,
         checkpointer=checkpointer,
-        thread_id="message_112233"
+        thread_id="message_112233",
+        store=store,
+        context={"user_name": "user_112233"}
     )
 
     # Display result

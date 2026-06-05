@@ -2,8 +2,10 @@ from pathlib import Path
 from typing import Optional
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_openai import ChatOpenAI
+from langgraph.runtime import Runtime
+from langgraph.store.base import BaseStore
 
-from state import MessageResponseState, Decision, NodeName, AIReviewerResponse
+from state import ContextSchema, MessageResponseState, Decision, NodeName, AIReviewerResponse
 from config import (
     MAX_REVISIONS,
     DEFAULT_MODEL,
@@ -65,7 +67,9 @@ def _update_writer_state(
     }
 
 def writer_node(
-    state: MessageResponseState
+    state: MessageResponseState,
+    runtime: Runtime[ContextSchema],
+    store: BaseStore
 ) -> MessageResponseState:
     """Writer node that generates a response based on the current state and optional feedback.
     Args:
@@ -74,6 +78,19 @@ def writer_node(
     Returns:
         Updated state after generating response and incrementing revision count if feedback was provided.
     """
+
+    user_name = runtime.context["user_name"]
+    # search based on user's last message
+    items = store.search(
+        (user_name, "memories"),
+        query="What's the name of this user?", 
+        limit=1
+    )
+    memories = "\n".join(item.value["text"] for item in items)
+    memories = f"## Memories of user\n{memories}" if memories else ""
+
+    print(f"Memories found for {user_name}: {memories}")
+
     revision_count = state.get("revision_count", 0)
     latest_decision = state.get("latest_reviewer_decision", Decision.APPROVE)
 

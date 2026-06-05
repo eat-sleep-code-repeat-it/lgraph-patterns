@@ -4,6 +4,9 @@ from typing import Literal
 
 from langgraph.graph import MessagesState
 
+@dataclass
+class ContextSchema:
+    user_name: str
 
 class Decision(str, Enum):
     """Enumeration for reviewer decision types."""
