@@ -12,6 +12,7 @@ from config import (
     DEFAULT_TEMPERATURE,
     MAX_REVISIONS_MESSAGE,
 )
+from langgraph.config import get_stream_writer
 
 BASE_DIR = Path(__file__).resolve().parent
 PROMPTS_DIR = BASE_DIR / "prompts"
@@ -79,7 +80,12 @@ def writer_node(
         Updated state after generating response and incrementing revision count if feedback was provided.
     """
 
+    writer = get_stream_writer()
+    # Emit a custom key-value pair (e.g., progress update)
+    writer({"writer_node":"extracting user name from the context"})
+
     user_name = runtime.context["user_name"]
+
     # search based on user's last message
     items = store.search(
         (user_name, "memories"),

@@ -1,74 +1,50 @@
-## Demo: Extending the App with Memory and Context
+## Demo: Extending the App with Streaming
 
-### Key Concepts
+### Streaming Capabilities in LangGraph
 
-#### Context
+LangGraph supports streaming at multiple levels:
 
-**Context** is the information available to the agent at any given moment. It typically includes:
+| What You Can Stream | Description |
+|---------------------|-------------|
+| **Graph state updates** | Changes after each node step (`updates` mode) |
+| **Full graph state** | Complete state snapshot after each step (`values` mode) |
+| **Subgraph states** | State from nested subgraphs as they execute |
+| **LLM tokens** | Individual tokens from the LLM as they are generated |
+| **Custom events** | User-defined events emitted from inside nodes or tools |
 
-- Current user input
-- Recent conversation history
-- Retrieved documents (e.g., via RAG)
-- System instructions
-- Environmental signals (tool outputs, API responses, etc.)
-
-#### Memory
-
-**Memory** is what the agent retains over time to improve future responses and personalization — the agent's long-term knowledge built from previous interactions or stored information.
-
-Memory comes in two categories:
-
-| Type | Scope | How It Works in LangGraph |
-|------|-------|--------------------------|
-| **Short-term** | Single session | Managed as part of agent state, persisted via the checkpointer |
-| **Long-term** | Across sessions | Stored and retrieved using the memory store |
-
-In most real-world applications, both types are combined to build rich context for the LLM.
-
----
-
-### The Memory Store
-
-The **memory store** allows persisting and retrieving information across different sessions. This demo uses an in-memory store.
-
-**Basic usage:**
-
-1. **Define a namespace** — a tuple of any length representing an identifier (e.g., `user_id`)
-2. **Save memories** — use `store.put(namespace, key, value)` to store data
-3. **Retrieve memories** — use `store.search(namespace, query)` to query stored data
-
-**Enhancing with semantic search:**
-
-Attach an embedding model when creating the store. This enables the store to index memories and perform **semantic search** — recalling the most relevant memories based on a query.
+Multiple stream modes can be **combined** in a single call.
 
 ---
 
 ### Code Walkthrough
 
-#### Graph Compilation
+#### Enabling Multiple Stream Modes
 
-Both long-term and short-term memory contribute to the overall context. Additionally, **runtime context** can be passed to the agent via a context schema.
+When calling `stream()`, set `stream_mode` to combine modes:
 
-- **Context schema** — defines runtime inputs (e.g., a `username` field used to create a user-specific memory namespace)
-- **Graph compilation** — requires both a `checkpointer` and a `store`
-- **Graph invocation** — pass the runtime context alongside the input
+```python
+graph.stream(input, config, stream_mode=["updates", "custom"])
+```
 
-#### `main` Function
+- `updates` — emits only the state changes after each node step
+- `custom` — emits user-defined events sent from inside nodes
 
-- Creates an `InMemoryStore` with an attached embedding model (from LangChain) to enable semantic search
-- Defines a namespace using a hardcoded `user_id` and a label (e.g., `"memories"`)
-- Stores JSON objects into that namespace via `store.put`
+---
 
-#### Inside the Node
+#### Emitting Custom Events from `writer_node`
 
-The node receives both **runtime context** and the **store** as inputs:
+In `nodes.py`, the `writer_node` uses `get_stream_writer` to access a `StreamWriter` and emit custom data during execution:
 
-1. Extracts `username` from the runtime context
-2. Calls `store.search(namespace, query)` to retrieve relevant memories
-3. Includes retrieved memories in the message history
-4. Passes the enriched message history to the LLM
+```python
+from langgraph.types import StreamWriter, get_stream_writer
 
-This is how the model becomes aware of past interactions and user-specific data.
+def writer_node(state, ...):
+    writer = get_stream_writer()
+    writer({"status": "Writer is generating a response..."})
+    # ... rest of node logic
+```
+
+This lets users see real-time progress while the node is running, before it completes.
 
 ---
 
@@ -77,3 +53,6 @@ This is how the model becomes aware of past interactions and user-specific data.
 ```bash
 python graph_simple.py
 ```
+
+The graph emits custom events directly from `writer_node` as it executes.
+

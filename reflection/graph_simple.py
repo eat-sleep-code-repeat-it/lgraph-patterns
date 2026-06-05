@@ -61,7 +61,7 @@ async def process_customer_message(
         thread_id: Unique identifier for the message thread, used for state tracking.
         checkpointer: Optional InMemorySaver instance for checkpointing state.
     Returns:
-        Final state after processing the message through the workflow.
+        Final state dictionary containing the approved response and metadata.
     """
 
     workflow = create_reflection_graph()
@@ -82,12 +82,13 @@ async def process_customer_message(
             "thread_id": thread_id
         }
     }
-    final_state = await app.ainvoke(
+
+    for chunk in app.stream(
         initial_state, 
         config=config,
-        context=context
-    )
-    return final_state
+        context=context,
+        stream_mode=["updates", "custom"]):
+        print(chunk)
 
 async def main() -> None:
     print("Customer comment response system - Reflection Pattern Demo\n")
@@ -124,7 +125,7 @@ async def main() -> None:
          "3",
         {"text": "I love technology and programming"}
         )   
-    result = await process_customer_message(
+    await process_customer_message(
         customer_message=sample_comment,
         checkpointer=checkpointer,
         thread_id="message_112233",
@@ -132,13 +133,7 @@ async def main() -> None:
         context={"user_name": "user_112233"}
     )
 
-    # Display result
-    print(f"\n Comment: {sample_comment}")
-    print(f"\n Response: {result.get('latest_message_response_by_writer', 'N/A')}")
-    print("-"*80)
-
-    print("\n Status: Response ready to send!")
-    print("\n Demo completed. All customer comments have been processed.\n")
+    print("\n Demo completed. \n")
 
 if __name__ == "__main__":
     import asyncio
