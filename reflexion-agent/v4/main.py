@@ -1,21 +1,15 @@
-from typing import Annotated, List, TypedDict
-
-from dotenv import load_dotenv, find_dotenv
-load_dotenv(find_dotenv())
+from typing import List
 
 from langchain_core.messages import BaseMessage, ToolMessage
-from langgraph.graph import END, MessageGraph, StateGraph, add_messages
+from langgraph.graph import END, MessageGraph
 
-from chains import first_responder, revisor
-from tool_executor import tool_node
+from chains import revisor, first_responder
+from tool_executor import execute_tools
 
-class MessageGraph(TypedDict):
-    messages: Annotated[list[BaseMessage], add_messages]
-    
 MAX_ITERATIONS = 2
-builder = StateGraph(state_schema=MessageGraph)
+builder = MessageGraph()
 builder.add_node("draft", first_responder)
-builder.add_node("execute_tools", tool_node)
+builder.add_node("execute_tools", execute_tools)
 builder.add_node("revise", revisor)
 builder.add_edge("draft", "execute_tools")
 builder.add_edge("execute_tools", "revise")
@@ -33,17 +27,11 @@ builder.add_conditional_edges("revise", event_loop)
 builder.set_entry_point("draft")
 graph = builder.compile()
 
-
 print(graph.get_graph().draw_mermaid())
-print(graph.get_graph().draw_ascii())
-print("\ngoto: https://mermaid.live/")
 
-"""
-graph.get_graph().draw_mermaid_png(output_file_path="graph.png")
 
 res = graph.invoke(
     "Write about AI-Powered SOC / autonomous soc  problem domain, list startups that do that and raised capital."
 )
 print(res[-1].tool_calls[0]["args"]["answer"])
 print(res)
-"""
