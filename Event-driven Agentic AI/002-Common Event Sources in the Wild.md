@@ -1,0 +1,20 @@
+### Common Event Sources in the Wild
+
+Your agents live in a city of signals coming from a whole variety of sources. 
+
+A webhook is analogous to a doorbell that a web deployed application calls. Something happens, and it brings your endpoint with the details. It's used when a payment is cleared, a ticket is created, and so on. It's immediate and great for reacting fast. It's important to keep track of your incoming webhooks, think of it as a camera attached to your doorbell, each webhook that your system receives should be recorded in the log along with its delivery status. You should also make sure that only authorized clients can send webhooks to your system, which is analogous to having your house in a gated community. You will verify the signature of the webhook before it reaches your system, and rate limit the number of webhooks so your system doesn't receive more of them than it can cope with. 
+
+A webhook is a type of a push event, but there's also polling, which is about repeatedly contacting an endpoint to see if there's any new data available. Application programming interface, or API, is a collection of endpoints you can poll. Polling an API is like checking your mailbox every hour, simple, but you might miss freshness if the intervals between polls are too long. You will also waste trips if there are no new updates. Push, which is done via webhooks, can also be done via other mechanisms, such as WebSockets, servers, and events. Is a newsletter delivered to your door as soon as it's printed? Each of these techniques has its pros and cons. Push is the best when latency matters, polling is the best when publishers can't push, or as a safety net. 
+
+Another way of triggering events in an energetic system is queues. A queue is like a warehouse conveyor belt, messages line up on the first in, first out basis. Your consumers, which are like warehouse workers, grab the next box only that instead of boxes, your queues contain messages which are structured data packages. Queues are great for work distribution, backpressure, and retries. An important point about queues is that once a message has been taken off it, it's no longer available on the queue, therefore, only one queue listener can obtain each message. There's also a publication subscription mechanism, Pub/Sub. It's a community bulletin board. Publishers pin notes on the topics. Many subscribers can read the same note independently. 
+
+A message broker software like Kafka adds durable history and replace, like keeping every flyer ever posted. 
+Neural Atomic Transport System, or NATS, emphasizes lightweight, low‑latency messaging, which makes it more like real‑time walkie‑talkies. 
+
+Pub/Sub pattern is especially useful when different systems need to react to the same event for different reasons. For example, a purchase event may be sent to the system that processes the monetary transaction, while also being sent to a different system that adjusts the stock count of the purchased product. Same event, different consumers. 
+
+Very often, event‑driven systems are fed by data from the Internet of Things, IoT, devices, such as sensors, smart cameras, smartwatches, and so on. They typically use Message Queuing Telemetry Transport, or MQTT, to transmit the data. This protocol sends tiny frequent signals over spotty networks. It's optimized for low bandwidth and intermittent connectivity, perfect for sensors, vehicles, and wearables. Because your car or your watch is constantly on the move, you may be in an area where the signal is low, this is why these devices need protocol optimized for low bandwidth. 
+
+When an event occurs inside your database, it gets processed by change data capture, or CDC. The CDC is like a security camera time lapse of your database, every insert, update, and delete becomes an event. It's ideal when the system of records can push events, but you still need accurate order changes for cache, search indexes, or downstream analytics. 
+
+This concludes the overview of technologies used to make event‑driven systems run.

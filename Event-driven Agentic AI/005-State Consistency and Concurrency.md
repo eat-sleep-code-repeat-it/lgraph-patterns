@@ -1,0 +1,15 @@
+### State Consistency and Concurrency
+
+Properly‑designed event processing systems are fast and remain consistent, even when they process large volumes of data. There are tools and principles that enable this. Let's start with sagas. 
+
+A saga is a multi‑step story told through events and commands, with a plan for what to undo when something goes wrong. Saga is a great alternative to distributed transactions, which are less suitable for robust, event‑driven systems. A single transaction across resources may be simpler. Also, instead of a complex compensative action, it can be simply reverted if anything goes wrong. However, the problem with such an approach is that it logs the resources, making it problematic for high throughput systems. 
+
+Next, the outbox pattern. The bug you never want is we updated the state, but the event never left the building, outbox fixes that. Your service writes both the business change and the to‑be‑published event in the same database transaction. A background publisher reads the outbox and emits to the bus, marking each row as published. With outbox, state and event are either both committed or neither is. Events repeat and reorder, thus normal, as intermittent failures in complex system may cause it to rescind the same event. Ideally, your system should process your events exactly once. 
+
+For example, this is like making sure that payment is triggered only once, and the same payment is never triggered again. While this is a preferred approach for critical transactions, this is not always easy to implement in practice. A more practical alternative is effectively‑once, which is achieved by combining at least once‑delivery with idempotency keys and effect logs. Give every request or event a unique key. If you see the same key again, you return the same result without doing the work twice. Think of it like pressing a button twice, but not experiencing any effect on the second press. 
+
+For concurrency, prefer optimistic concurrency. Use ETags or row version's so two agents don't silently override each other. If a write collides, retry with fresh state. And remember, ordering is guaranteed by partition at best, design handlers that can tolerate the reordered events or choose keys that keep related actions together. 
+
+I will show you some real‑world examples of this. I'll open the Function App running durable functions. When a customer made an order, this function will charge the customer, ship the items that the customer ordered, and notify the customer that their order has been processed. If anything goes wrong at any stage, it will automatically revert the appropriate parts of the workflow. All of these steps are coordinated by the OrderSaga orchestrator, if we open it and look at its code, you'll see that it triggers, Charge, Ship, and Notify. If any error occurs during the process, it will then trigger an appropriate compensative action. 
+
+Takeaway, design for effectively once end to end. The saga coordinates, and outbox guarantees publication, and idempotency prevents double effects, and optimistic concurrency keeps writers honest.
