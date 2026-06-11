@@ -89,7 +89,7 @@ This project builds upon:
 - [LangGraph](https://langchain-ai.github.io/langgraph/tutorials/reflexion/reflexion/) for agent control flow
 - [LangChain](https://github.com/langchain-ai/langchain) for LLM interactions
 - [Tavily API](https://tavily.com/) for web search capabilities
-
+- https://github.com/emarco177/langgraph-course/tree/project/reflexion-agent
 
 
 ## 🔗 Links
