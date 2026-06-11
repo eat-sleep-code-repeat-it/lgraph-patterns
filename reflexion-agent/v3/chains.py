@@ -1,8 +1,7 @@
 import datetime
 
-from dotenv import load_dotenv
-
-load_dotenv()
+from dotenv import load_dotenv, find_dotenv
+load_dotenv(find_dotenv())
 
 from langchain_core.messages import HumanMessage
 from langchain_core.output_parsers.openai_tools import (

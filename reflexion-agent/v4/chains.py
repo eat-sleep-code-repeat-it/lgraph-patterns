@@ -1,10 +1,11 @@
 import datetime
 
-from dotenv import load_dotenv
+from typing import TypedDict, List
 
-load_dotenv()
+from dotenv import load_dotenv, find_dotenv
+load_dotenv(find_dotenv())
 
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, BaseMessage
 from langchain_core.output_parsers.openai_tools import (
     JsonOutputToolsParser,
     PydanticToolsParser,
@@ -57,6 +58,19 @@ revise_instructions = """Revise your previous answer using the new information.
 revisor = actor_prompt_template.partial(
     first_instruction=revise_instructions
 ) | llm.bind_tools(tools=[ReviseAnswer], tool_choice="ReviseAnswer")
+
+
+# Node wrapper functions for StateGraph
+def first_responder_node(state: dict) -> dict:
+    """Process the first response."""
+    result = first_responder.invoke({"messages": state["messages"]})
+    return {"messages": [result]}
+
+
+def revisor_node(state: dict) -> dict:
+    """Revise the response based on tool results."""
+    result = revisor.invoke({"messages": state["messages"]})
+    return {"messages": [result]}
 
 
 if __name__ == "__main__":

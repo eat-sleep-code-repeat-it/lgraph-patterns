@@ -64,6 +64,8 @@ poetry run python main.py
 1. Get your API keys:
    - [OpenAI Platform](https://platform.openai.com/) for GPT-4 access
    - [Tavily](https://tavily.com/) for search functionality
+      - searxng
+      - DuckDuckGo
    - [LangSmith](https://smith.langchain.com/) (optional) for tracing
 
 2. Copy the example environment file:

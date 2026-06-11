@@ -3,26 +3,26 @@ from typing import Annotated, List, TypedDict
 from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv())
 
-from langchain_core.messages import BaseMessage, ToolMessage
-from langgraph.graph import END, MessageGraph, StateGraph, add_messages
+from langchain_core.messages import BaseMessage, ToolMessage, HumanMessage
+from langgraph.graph import END, StateGraph, add_messages
 
-from chains import first_responder, revisor
+from chains import first_responder_node, revisor_node
 from tool_executor import tool_node
 
-class MessageGraph(TypedDict):
+class AgentState(TypedDict):
     messages: Annotated[list[BaseMessage], add_messages]
     
 MAX_ITERATIONS = 2
-builder = StateGraph(state_schema=MessageGraph)
-builder.add_node("draft", first_responder)
+builder = StateGraph(state_schema=AgentState)
+builder.add_node("draft", first_responder_node)
 builder.add_node("execute_tools", tool_node)
-builder.add_node("revise", revisor)
+builder.add_node("revise", revisor_node)
 builder.add_edge("draft", "execute_tools")
 builder.add_edge("execute_tools", "revise")
 
 
-def event_loop(state: List[BaseMessage]) -> str:
-    count_tool_visits = sum(isinstance(item, ToolMessage) for item in state)
+def event_loop(state: AgentState) -> str:
+    count_tool_visits = sum(isinstance(item, ToolMessage) for item in state["messages"])
     num_iterations = count_tool_visits
     if num_iterations > MAX_ITERATIONS:
         return END
@@ -38,12 +38,11 @@ print(graph.get_graph().draw_mermaid())
 print(graph.get_graph().draw_ascii())
 print("\ngoto: https://mermaid.live/")
 
-"""
+
 graph.get_graph().draw_mermaid_png(output_file_path="graph.png")
 
 res = graph.invoke(
-    "Write about AI-Powered SOC / autonomous soc  problem domain, list startups that do that and raised capital."
+    {"messages": [HumanMessage(content="Write about AI-Powered SOC / autonomous soc  problem domain, list startups that do that and raised capital.")]}
 )
-print(res[-1].tool_calls[0]["args"]["answer"])
+print(res["messages"][-1].tool_calls[0]["args"]["answer"])
 print(res)
-"""
