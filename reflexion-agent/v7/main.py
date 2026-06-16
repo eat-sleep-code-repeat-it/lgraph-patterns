@@ -39,7 +39,7 @@ builder.add_node("revise", revise_node)
 builder.add_edge(START, "draft")
 builder.add_edge("draft", "execute_tools")
 builder.add_edge("execute_tools", "revise")
-builder.add_conditional_edges("revise", event_loop, ["execute_tools", END])
+builder.add_conditional_edges("revise", event_loop, ["draft","execute_tools", END])
 graph = builder.compile()
 
 
@@ -56,14 +56,15 @@ res = graph.invoke(
 )
 print(res["messages"][-1].tool_calls[0]["args"]["answer"])
 print(res)
-
+"""
 
 res = graph.invoke(
     {
         "messages": [
             {
                 "role": "user",
-                "content": "Write about AI-Powered SOC / autonomous soc problem domain, list startups that do that and raised capital.",
+                #"content": "Write about AI-Powered SOC / autonomous soc problem domain, list startups that do that and raised capital.",
+                "content": "Write about what FHA Monthly Principla reduction is.",
             }
         ]
     }
@@ -72,5 +73,4 @@ res = graph.invoke(
 last_message = res["messages"][-1]
 if isinstance(last_message, AIMessage) and last_message.tool_calls:
     print(last_message.tool_calls[0]["args"]["answer"])
-print(res)
-"""
+#print(res)
